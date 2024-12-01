@@ -52,8 +52,17 @@ async def start(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     # Welcome Message
     welcome_message = (
         f"{greeting}, {user.first_name}!\n\n"
-        "🤖 *Welcome to Okto Advisor Bot* – Your assistant for DeFi insights.\n"
-        "Select a feature below to explore!"
+        "🚀 *Welcome to Okto Advisor Bot* – Your go-to assistant for navigating the DeFi space. 🌐\n\n"
+        "Whether you're an experienced trader or just starting your DeFi journey, I'm here to provide real-time insights, "
+        "track your portfolio, help you execute trades, and much more! 💼💡\n\n"
+        "🔎 Select one of the features below to dive deeper into DeFi:\n"
+        "\n*Here’s a snapshot of what you can do:* 📱💬\n\n"
+        "• *📊 Market Insights* – Get live updates and analysis on top DeFi assets.\n"
+        "• *💰 Portfolio Management* – Keep track of your investments and make smarter decisions.\n"
+        "• *🤝 Social Trading* – Follow top traders and copy their successful strategies.\n"
+        "• *💹 Staking & Yield Farming* – Explore high-APY opportunities and maximize your returns.\n"
+        "• *🔗 Help & Support* – Get assistance whenever you need it!\n\n"
+        "Choose a feature below and let's make your DeFi experience seamless! 🌟"
     )
 
     # Enhanced Button Menu
@@ -156,61 +165,37 @@ async def trade(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
             f"🪙 Symbol: {trade_details['symbol']}\n"
             f"🔄 Quantity: {trade_details['quantity']}\n"
             f"📈 Side: {trade_details['side']}\n\n"
-            f"📅 Timestamp: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}",
-            parse_mode="Markdown"
+            f"📅 Timestamp: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}"
         )
 
-# Command: Market
-async def market(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
-    """Fetch and display detailed market data."""
-    data = get_market_data(OKTO_API_KEY)
-    if 'error' in data:
-        await update.message.reply_text(f"❌ Error fetching market data: {data['error']}")
-    else:
-        summary = (
-            f"📊 *Market Data Summary:*\n\n"
-            f"📈 BTC/USDT: {data.get('BTCUSDT', {}).get('price', 'N/A')} USD\n"
-            f"📉 ETH/USDT: {data.get('ETHUSDT', {}).get('price', 'N/A')} USD\n"
-            f"🚀 *Top Gainers:* {', '.join(data.get('top_gainers', [])[:3])}\n"
-            f"📉 *Top Losers:* {', '.join(data.get('top_losers', [])[:3])}\n"
-            f"📅 Last Updated: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}"
-        )
-        await update.message.reply_text(summary, parse_mode="Markdown")
+# Function to execute trade (Mock)
+def execute_trade(api_key, trade_details):
+    # Mock trade execution response
+    return {
+        "status": "success",
+        "symbol": trade_details['symbol'],
+        "quantity": trade_details['quantity'],
+        "side": trade_details['side'],
+        "timestamp": datetime.now().strftime('%Y-%m-%d %H:%M:%S')
+    }
 
-# Callback: Button Click
-async def send_insight(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
-    """Respond to button clicks with dynamic insights."""
-    query = update.callback_query
-    await query.answer()
-    insight_key = query.data
-
-    if insight_key in INSIGHTS:
-        await query.edit_message_text(
-            f"📘 *{insight_key}*\n\n{INSIGHTS[insight_key]}",
-            parse_mode="Markdown"
-        )
-    else:
-        await query.edit_message_text("❌ No insights available for this option.")
-
-# Main function to setup the bot
-async def main() -> None:
+# Main execution
+async def main():
+    """Start the bot."""
     application = ApplicationBuilder().token(TELEGRAM_TOKEN).build()
 
     application.add_handler(CommandHandler("start", start))
     application.add_handler(CommandHandler("help", help_command))
-    application.add_handler(CommandHandler("feedback", feedback))
-    application.add_handler(CommandHandler("preferences", preferences))
-    application.add_handler(CommandHandler("trade", trade))
-    application.add_handler(CommandHandler("market", market))
     application.add_handler(CommandHandler("search", search_insights))
+    application.add_handler(CommandHandler("preferences", preferences))
+    application.add_handler(CommandHandler("feedback", feedback))
+    application.add_handler(CommandHandler("trade", trade))
+    application.add_handler(CallbackQueryHandler(handle_button))
+    application.add_handler(MessageHandler(filters.TEXT, message_handler))
 
-    # Register button callback handler
-    application.add_handler(CallbackQueryHandler(send_insight))
-
-    # Run the bot
     await application.run_polling()
 
-# Running the bot
+# Run the bot
 if __name__ == "__main__":
     import asyncio
     asyncio.run(main())
