@@ -15,57 +15,57 @@ logger = logging.getLogger(__name__)
 OKTO_API_KEY = 'c6ab43bd-cf0b-4922-9be9-8750e72d223b'
 TELEGRAM_TOKEN = '8118102733:AAEL6abhJHS8FYxShRt7NmzBYMuBIBs5cvg'
 
-# Static insights for each category (expanded)
+# Static insights for each category
 INSIGHTS = {
-    "Automated Trade Execution": "Bots automate buy/sell orders based on predefined strategies, eliminating emotional trading and allowing 24/7 operation.",
-    "Market Monitoring": "Real-time alerts on price changes, volume spikes, and market trends. Bots can also scan news and social media for insights.",
-    "Portfolio Management": "Monitor your assets, track performance, and receive rebalancing suggestions for better diversification.",
-    "Social Trading": "Copy trades from expert traders, follow their strategies, and gain insights through leaderboards and analytics.",
-    "Staking Yield Farming": "Simplifies staking and yield farming processes while notifying users about new opportunities and APY updates.",
-    "Loan Management": "Monitor DeFi loans, adjust collateral, and receive risk alerts to prevent liquidation directly from the chat.",
-    "DeFi Alerts": "Get notified of APY changes, new pools, and major platform updates to optimize your yield farming and staking strategies.",
-    "Voting Polls": "Participate in DAO governance easily with real-time vote summaries and results.",
-    "Event Management": "Organize AMAs, webinars, or hackathons with scheduling and notification tools integrated into chat groups.",
-    "Automated Moderation": "Maintain healthy communities with spam filters, toxic language detection, and rule enforcement.",
-    "Advertising Partnerships": "Promote projects with tailored sponsored messages to engage relevant audiences effectively."
+    "Automated Trade Execution": "Bots can execute buy/sell orders based on predefined strategies or signals, automating cryptocurrency trading.",
+    "Market Monitoring": "Bots provide real-time alerts and updates on market conditions, such as price changes and volume spikes.",
+    "Portfolio Management": "Users can track and manage their crypto assets directly through chat interfaces, monitoring trading performance.",
+    "Social Trading": "Some bots allow users to follow and copy trades from expert traders, facilitating social trading within the platform.",
+    "Staking Yield Farming": "Bots guide users through staking processes and notify them of new yield farming opportunities.",
+    "Loan Management": "Integration with DeFi lending platforms enables users to borrow or lend assets directly from the chat interface.",
+    "DeFi Alerts": "Users receive alerts for significant changes in DeFi platforms, such as APY fluctuations or new pool offerings.",
+    "Voting Polls": "Bots manage community governance by organizing votes and polls in DAO communities.",
+    "Event Management": "Bots help organize and promote events like AMAs, webinars, or hackathons within chat groups.",
+    "Automated Moderation": "Bots enforce moderation policies by managing group rules, filtering out spam, and maintaining a healthy community environment.",
+    "Advertising Partnerships": "Bots can partner with crypto projects or services to promote offerings through sponsored messages."
 }
 
 async def start(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
-    """Start command to welcome the user and display categories."""
-    keyboard = [[InlineKeyboardButton(key, callback_data=key)] for key in INSIGHTS.keys()]
+    keyboard = [
+        [InlineKeyboardButton("Automated Trade Execution", callback_data='Automated Trade Execution')],
+        [InlineKeyboardButton("Market Monitoring", callback_data='Market Monitoring')],
+        [InlineKeyboardButton("Portfolio Management", callback_data='Portfolio Management')],
+        [InlineKeyboardButton("Social Trading", callback_data='Social Trading')],
+        [InlineKeyboardButton("Staking Yield Farming", callback_data='Staking Yield Farming')],
+        [InlineKeyboardButton("Loan Management", callback_data='Loan Management')],
+        [InlineKeyboardButton("DeFi Alerts", callback_data='DeFi Alerts')],
+        [InlineKeyboardButton("Voting Polls", callback_data='Voting Polls')],
+        [InlineKeyboardButton("Event Management", callback_data='Event Management')],
+        [InlineKeyboardButton("Automated Moderation", callback_data='Automated Moderation')],
+        [InlineKeyboardButton("Advertising Partnerships", callback_data='Advertising Partnerships')]
+    ]
+    
     reply_markup = InlineKeyboardMarkup(keyboard)
-
-    await update.message.reply_text(
-        "Welcome to the Okto Advisor Bot! Explore various features and insights:\n\n"
-        "1️⃣ Use /help to view all available commands.\n"
-        "2️⃣ Select a category below to learn more:",
-        reply_markup=reply_markup
-    )
-
-async def help_command(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
-    """List all available commands."""
-    await update.message.reply_text(
-        "/start - Welcome message with insights menu.\n"
-        "/trade - Execute a sample cryptocurrency trade.\n"
-        "/market - Fetch the latest market data summary.\n"
-        "/help - Display this help message."
-    )
+    
+    await update.message.reply_text('Welcome to Okto Advisor Bot! Choose a category:', reply_markup=reply_markup)
 
 async def send_insight(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
-    """Send detailed insight for the selected category."""
     query = update.callback_query
     await query.answer()
     
     insight_key = query.data
+    
     if insight_key in INSIGHTS:
-        await query.edit_message_text(f"📘 *{insight_key}*\n\n{INSIGHTS[insight_key]}", parse_mode="Markdown")
+        await query.edit_message_text(text=INSIGHTS[insight_key])
     else:
-        await query.edit_message_text("❌ Sorry, I don't have information on that topic.")
+        await query.edit_message_text(text="Sorry, I don't have information on that topic.")
 
 def execute_trade(api_key, trade_details):
-    """Execute a trade via API."""
     url = "https://api.okto.tech/trade"
-    headers = {"Authorization": f"Bearer {api_key}", "Content-Type": "application/json"}
+    headers = {
+        "Authorization": f"Bearer {api_key}",
+        "Content-Type": "application/json"
+    }
     try:
         response = requests.post(url, headers=headers, json=trade_details)
         response.raise_for_status()
@@ -75,16 +75,18 @@ def execute_trade(api_key, trade_details):
         return {"error": str(e)}
 
 async def trade(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
-    """Execute a sample trade."""
-    trade_details = {"symbol": "BTCUSDT", "quantity": 0.01, "side": "buy"}
+    trade_details = {
+        "symbol": "BTCUSDT",
+        "quantity": 0.01,
+        "side": "buy"
+    }
     result = execute_trade(OKTO_API_KEY, trade_details)
     if 'error' in result:
-        await update.message.reply_text(f"❌ Error executing trade: {result['error']}")
+        await update.message.reply_text(f"Error executing trade: {result['error']}")
     else:
-        await update.message.reply_text(f"✅ Trade executed successfully!\nDetails: {result}")
+        await update.message.reply_text(f'Trade executed: {result}')
 
 def get_market_data(api_key):
-    """Fetch market data via API."""
     url = "https://api.okto.tech/market-data"
     headers = {"Authorization": f"Bearer {api_key}"}
     try:
@@ -96,28 +98,20 @@ def get_market_data(api_key):
         return {"error": str(e)}
 
 async def market(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
-    """Fetch and display market data."""
     data = get_market_data(OKTO_API_KEY)
     if 'error' in data:
-        await update.message.reply_text(f"❌ Error fetching market data: {data['error']}")
+        await update.message.reply_text(f"Error fetching market data: {data['error']}")
     else:
-        # Extract and summarize key market metrics
-        summary = (
-            f"📊 *Market Data Summary:*\n\n"
-            f"BTC/USDT Price: {data.get('BTCUSDT', {}).get('price', 'N/A')}\n"
-            f"ETH/USDT Price: {data.get('ETHUSDT', {}).get('price', 'N/A')}\n"
-            f"Top Gainers: {', '.join(data.get('top_gainers', [])[:3])}\n"
-            f"Top Losers: {', '.join(data.get('top_losers', [])[:3])}\n"
-        )
-        await update.message.reply_text(summary, parse_mode="Markdown")
+        await update.message.reply_text(f'Market Data: {data}')
 
 def main():
-    """Run the bot."""
     application = ApplicationBuilder().token(TELEGRAM_TOKEN).build()
 
     application.add_handler(CommandHandler("start", start))
-    application.add_handler(CommandHandler("help", help_command))
+    
+    # Add handler for callback queries from inline buttons
     application.add_handler(CallbackQueryHandler(send_insight))
+
     application.add_handler(CommandHandler("trade", trade))
     application.add_handler(CommandHandler("market", market))
 
