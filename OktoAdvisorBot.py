@@ -207,27 +207,25 @@ def get_portfolio():
     
     return data.decode("utf-8")
 
-# Function to execute token transfer on OKTO API
+# Function to execute token transfers using OKTO API
 def transfer_tokens(network_name, token_address, quantity, recipient_address):
-    """Execute a token transfer using OKTO API."""
+    """Transfer tokens using OKTO API."""
     conn = http.client.HTTPSConnection(OKTO_API_BASE)
+    headers = {
+        'Authorization': f"Bearer {OKTO_API_KEY}",
+        'Content-Type': 'application/json'
+    }
     
     payload = json.dumps({
-        "network_name": network_name,
+        "network": network_name,
         "token_address": token_address,
         "quantity": quantity,
         "recipient_address": recipient_address
     })
     
-    headers = {
-        'Authorization': f"Bearer {OKTO_API_KEY}",
-        'Content-Type': "application/json"
-    }
-    
-    conn.request("POST", "/api/v1/transfer/tokens/execute", payload, headers)
+    conn.request("POST", "/api/v1/transfer", payload, headers)
     
     res = conn.getresponse()
     data = res.read()
     
-    return data.decode("utf-8")
-
+    return json.loads(data.decode("utf-8"))
