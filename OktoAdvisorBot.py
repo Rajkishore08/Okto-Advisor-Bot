@@ -1,6 +1,6 @@
 import requests
-from telegram import Update, InlineKeyboardButton, InlineKeyboardMarkup
-from telegram.ext import ApplicationBuilder, CommandHandler, CallbackQueryHandler, ContextTypes
+from telegram import Update
+from telegram.ext import ApplicationBuilder, CommandHandler, ContextTypes
 import logging
 import nest_asyncio
 
@@ -21,44 +21,41 @@ INSIGHTS = {
     "Market Monitoring": "Bots provide real-time alerts and updates on market conditions, such as price changes and volume spikes.",
     "Portfolio Management": "Users can track and manage their crypto assets directly through chat interfaces, monitoring trading performance.",
     "Social Trading": "Some bots allow users to follow and copy trades from expert traders, facilitating social trading within the platform.",
-    "Staking Yield Farming": "Bots guide users through staking processes and notify them of new yield farming opportunities.",
+    "Staking & Yield Farming": "Bots guide users through staking processes and notify them of new yield farming opportunities.",
     "Loan Management": "Integration with DeFi lending platforms enables users to borrow or lend assets directly from the chat interface.",
     "DeFi Alerts": "Users receive alerts for significant changes in DeFi platforms, such as APY fluctuations or new pool offerings.",
-    "Voting Polls": "Bots manage community governance by organizing votes and polls in DAO communities.",
+    "Voting & Polls": "Bots manage community governance by organizing votes and polls in DAO communities.",
     "Event Management": "Bots help organize and promote events like AMAs, webinars, or hackathons within chat groups.",
     "Automated Moderation": "Bots enforce moderation policies by managing group rules, filtering out spam, and maintaining a healthy community environment.",
-    "Advertising Partnerships": "Bots can partner with crypto projects or services to promote offerings through sponsored messages."
+    "Advertising & Partnerships": "Bots can partner with crypto projects or services to promote offerings through sponsored messages."
 }
 
 async def start(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
-    keyboard = [
-        [InlineKeyboardButton("Automated Trade Execution", callback_data='Automated Trade Execution')],
-        [InlineKeyboardButton("Market Monitoring", callback_data='Market Monitoring')],
-        [InlineKeyboardButton("Portfolio Management", callback_data='Portfolio Management')],
-        [InlineKeyboardButton("Social Trading", callback_data='Social Trading')],
-        [InlineKeyboardButton("Staking Yield Farming", callback_data='Staking Yield Farming')],
-        [InlineKeyboardButton("Loan Management", callback_data='Loan Management')],
-        [InlineKeyboardButton("DeFi Alerts", callback_data='DeFi Alerts')],
-        [InlineKeyboardButton("Voting Polls", callback_data='Voting Polls')],
-        [InlineKeyboardButton("Event Management", callback_data='Event Management')],
-        [InlineKeyboardButton("Automated Moderation", callback_data='Automated Moderation')],
-        [InlineKeyboardButton("Advertising Partnerships", callback_data='Advertising Partnerships')]
-    ]
-    
-    reply_markup = InlineKeyboardMarkup(keyboard)
-    
-    await update.message.reply_text('Welcome to Okto Advisor Bot! Choose a category:', reply_markup=reply_markup)
+    message = (
+        "Welcome to Okto Advisor Bot!\n"
+        "Choose a category to get more information:\n"
+        "/trade_execution - Automated Trade Execution\n"
+        "/market_monitoring - Market Monitoring\n"
+        "/portfolio_management - Portfolio Management\n"
+        "/social_trading - Social Trading\n"
+        "/staking_yield_farming - Staking & Yield Farming\n"
+        "/loan_management - Loan Management\n"
+        "/defi_alerts - DeFi Alerts\n"
+        "/voting_polls - Voting & Polls\n"
+        "/event_management - Event Management\n"
+        "/automated_moderation - Automated Moderation\n"
+        "/advertising_partnerships - Advertising & Partnerships"
+    )
+    await update.message.reply_text(message)
 
 async def send_insight(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
-    query = update.callback_query
-    await query.answer()
-    
-    insight_key = query.data
+    command = update.message.text[1:]  # Remove the leading '/'
+    insight_key = command.replace('_', ' ').title()
     
     if insight_key in INSIGHTS:
-        await query.edit_message_text(text=INSIGHTS[insight_key])
+        await update.message.reply_text(INSIGHTS[insight_key])
     else:
-        await query.edit_message_text(text="Sorry, I don't have information on that topic.")
+        await update.message.reply_text("Sorry, I don't have information on that topic.")
 
 def execute_trade(api_key, trade_details):
     url = "https://api.okto.tech/trade"
@@ -109,8 +106,9 @@ def main():
 
     application.add_handler(CommandHandler("start", start))
     
-    # Add handler for callback queries from inline buttons
-    application.add_handler(CallbackQueryHandler(send_insight))
+    # Add handlers for each insight category
+    for command in INSIGHTS.keys():
+        application.add_handler(CommandHandler(command.lower().replace(' ', '_'), send_insight))
 
     application.add_handler(CommandHandler("trade", trade))
     application.add_handler(CommandHandler("market", market))
