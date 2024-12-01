@@ -65,6 +65,22 @@ async def help_command(update: Update, context: ContextTypes.DEFAULT_TYPE) -> No
         parse_mode="Markdown"
     )
 
+# Command: Search Insights
+async def search_insights(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
+    """Search insights by keyword."""
+    if not context.args:
+        await update.message.reply_text("❓ Please provide a keyword to search. Usage: `/search <keyword>`")
+        return
+
+    keyword = " ".join(context.args).lower()
+    results = {key: val for key, val in INSIGHTS.items() if keyword in key.lower() or keyword in val.lower()}
+
+    if results:
+        response = "\n\n".join([f"📘 *{key}*\n{val}" for key, val in results.items()])
+        await update.message.reply_text(response, parse_mode="Markdown")
+    else:
+        await update.message.reply_text("❌ No insights found for the given keyword.")
+
 # Feedback Collection
 async def feedback(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     """Collect feedback from users."""
@@ -75,25 +91,7 @@ async def feedback(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     else:
         await update.message.reply_text("💡 Please provide your feedback using `/feedback <your message>`.")
 
-# Search Insights
-async def send_insight(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
-    """Respond to button clicks and display the corresponding insight."""
-    query = update.callback_query
-    await query.answer()  # Acknowledge the button click
-
-    insight_key = query.data  # Get the data from the button that was clicked
-
-    if insight_key in INSIGHTS:
-        await query.edit_message_text(
-            text=f"📘 *{insight_key}*\n{INSIGHTS[insight_key]}",
-            parse_mode="Markdown"
-        )
-    else:
-        await query.edit_message_text(
-            text="❌ Sorry, I don't have information on that topic."
-        )
-
-# User Preferences
+# Command: Preferences
 async def preferences(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     """View or update user preferences."""
     user_id = update.effective_user.id
@@ -140,20 +138,23 @@ async def market(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
         )
         await update.message.reply_text(summary, parse_mode="Markdown")
 
-# Admin Command: Broadcast
-async def broadcast(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
-    """Admin-only command to broadcast a message."""
-    if update.effective_user.username != "your_admin_username":  # Replace with admin username
-        await update.message.reply_text("⚠️ You don’t have permission to use this command.")
-        return
+# Callback: Button Click
+async def send_insight(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
+    """Respond to button clicks and display the corresponding insight."""
+    query = update.callback_query
+    await query.answer()  # Acknowledge the button click
 
-    message = " ".join(context.args)
-    if message:
-        logger.info(f"Broadcasting message: {message}")
-        await update.message.reply_text("✅ Broadcast message sent!")
-        # You can implement user list and loop over them to send messages
+    insight_key = query.data  # Get the data from the button that was clicked
+
+    if insight_key in INSIGHTS:
+        await query.edit_message_text(
+            text=f"📘 *{insight_key}*\n{INSIGHTS[insight_key]}",
+            parse_mode="Markdown"
+        )
     else:
-        await update.message.reply_text("❓ Please provide a message to broadcast.")
+        await query.edit_message_text(
+            text="❌ Sorry, I don't have information on that topic."
+        )
 
 # Helper Functions
 def execute_trade(api_key, trade_details):
@@ -180,23 +181,25 @@ def get_market_data(api_key):
         logger.error(f"Error fetching market data: {e}")
         return {"error": str(e)}
 
-# Main Function
+# Main function to set up the bot
 def main():
-    """Run the bot."""
+    """Start the bot."""
     application = ApplicationBuilder().token(TELEGRAM_TOKEN).build()
 
+    # Register command handlers
     application.add_handler(CommandHandler("start", start))
     application.add_handler(CommandHandler("help", help_command))
-    application.add_handler(CommandHandler("feedback", feedback))
-    application.add_handler(CommandHandler("search", search_insights))
-    application.add_handler(CommandHandler("preferences", preferences))
     application.add_handler(CommandHandler("trade", trade))
     application.add_handler(CommandHandler("market", market))
-    application.add_handler(CommandHandler("broadcast", broadcast))  # Admin-only command
+    application.add_handler(CommandHandler("feedback", feedback))
+    application.add_handler(CommandHandler("preferences", preferences))
+    application.add_handler(CommandHandler("search", search_insights))  # Add search insights command
+
+    # Register callback query handler
     application.add_handler(CallbackQueryHandler(send_insight))
 
+    # Start the bot
     application.run_polling()
 
-# Run the bot
-if __name__ == '__main__':
+if __name__ == "__main__":
     main()
