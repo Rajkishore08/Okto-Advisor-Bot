@@ -3,6 +3,7 @@ from telegram import Update, InlineKeyboardButton, InlineKeyboardMarkup
 from telegram.ext import ApplicationBuilder, CommandHandler, CallbackQueryHandler, ContextTypes, MessageHandler, filters
 import logging
 import nest_asyncio
+from datetime import datetime
 
 # Apply nest_asyncio to allow nested event loops
 nest_asyncio.apply()
@@ -34,20 +35,38 @@ INSIGHTS = {
 USER_PREFERENCES = {}
 TRADE_LOGS = []  # To store trade logs for review
 
-# Command: Start
+# Enhanced Start Command with dynamic greeting
 async def start(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
-    """Start command to welcome the user and display categories."""
+    """Start command with dynamic greeting and enhanced menu."""
     user = update.effective_user
-    keyboard = [[InlineKeyboardButton(key, callback_data=key)] for key in INSIGHTS.keys()]
+    current_hour = datetime.now().hour
+
+    # Dynamic Greeting
+    if 5 <= current_hour < 12:
+        greeting = "☀️ Good Morning"
+    elif 12 <= current_hour < 18:
+        greeting = "🌤️ Good Afternoon"
+    else:
+        greeting = "🌙 Good Evening"
+
+    # Welcome Message
+    welcome_message = (
+        f"{greeting}, {user.first_name}!\n\n"
+        "🤖 *Welcome to Okto Advisor Bot* – Your assistant for DeFi insights.\n"
+        "Select a feature below to explore!"
+    )
+
+    # Enhanced Button Menu
+    keyboard = [
+        [InlineKeyboardButton("📊 Market Insights", callback_data="Market Monitoring")],
+        [InlineKeyboardButton("💰 Portfolio Management", callback_data="Portfolio Management")],
+        [InlineKeyboardButton("🤝 Social Trading", callback_data="Social Trading")],
+        [InlineKeyboardButton("💹 Staking & Yield Farming", callback_data="Staking Yield Farming")],
+        [InlineKeyboardButton("🔗 Help & Support", callback_data="Help")],
+    ]
     reply_markup = InlineKeyboardMarkup(keyboard)
 
-    await update.message.reply_text(
-        f"👋 Welcome, {user.first_name}! I’m the Okto Advisor Bot 🤖\n\n"
-        "🌟 Explore various features and insights:\n"
-        "1️⃣ Use /help to view all available commands.\n"
-        "2️⃣ Select a category below to learn more:",
-        reply_markup=reply_markup
-    )
+    await update.message.reply_text(welcome_message, parse_mode="Markdown", reply_markup=reply_markup)
 
 # Command: Help
 async def help_command(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
@@ -81,23 +100,30 @@ async def search_insights(update: Update, context: ContextTypes.DEFAULT_TYPE) ->
     else:
         await update.message.reply_text("❌ No insights found for the given keyword.")
 
-# Feedback Collection
+# Improved Feedback Collection
 async def feedback(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
-    """Collect feedback from users."""
+    """Collect user feedback with optional admin logging."""
     feedback_message = " ".join(context.args) if context.args else None
+    user = update.effective_user
+
     if feedback_message:
-        logger.info(f"Feedback received: {feedback_message}")
-        await update.message.reply_text("🙏 Thank you for your feedback! We’ll use it to improve the bot.")
+        # Log feedback for admin review
+        logger.info(f"Feedback from {user.first_name} ({user.id}): {feedback_message}")
+        await update.message.reply_text(
+            "🙏 Thank you for your feedback! We value your input and will use it to improve the bot."
+        )
     else:
-        await update.message.reply_text("💡 Please provide your feedback using `/feedback <your message>`.")
+        await update.message.reply_text(
+            "💡 Please provide your feedback using `/feedback <your message>`."
+        )
 
 # Command: Preferences
 async def preferences(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
-    """View or update user preferences."""
+    """Manage user preferences dynamically."""
     user_id = update.effective_user.id
     user_preferences = USER_PREFERENCES.get(user_id, [])
+
     if context.args:
-        # Add a new preference
         new_preference = " ".join(context.args)
         if new_preference not in user_preferences:
             user_preferences.append(new_preference)
@@ -107,99 +133,57 @@ async def preferences(update: Update, context: ContextTypes.DEFAULT_TYPE) -> Non
             await update.message.reply_text(f"⚠️ '{new_preference}' is already in your preferences.")
     else:
         if user_preferences:
-            await update.message.reply_text(f"🌟 Your Preferences:\n- " + "\n- ".join(user_preferences))
+            await update.message.reply_text(
+                "🌟 *Your Preferences:*\n- " + "\n- ".join(user_preferences), parse_mode="Markdown"
+            )
         else:
-            await update.message.reply_text("💡 You have no preferences set. Use `/preferences <preference>` to add one.")
+            await update.message.reply_text(
+                "💡 You have no preferences set. Use `/preferences <preference>` to add one."
+            )
 
 # Command: Trade
 async def trade(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
-    """Execute a sample trade."""
+    """Execute a sample trade with better feedback."""
     trade_details = {"symbol": "BTCUSDT", "quantity": 0.01, "side": "buy"}
     result = execute_trade(OKTO_API_KEY, trade_details)
+
     if 'error' in result:
         await update.message.reply_text(f"❌ Error executing trade: {result['error']}")
     else:
-        TRADE_LOGS.append(result)  # Log trade details
-        await update.message.reply_text(f"✅ Trade executed successfully!\nDetails: {result}")
+        TRADE_LOGS.append(result)
+        await update.message.reply_text(
+            f"✅ *Trade Successful!*\n\n"
+            f"🪙 Symbol: {trade_details['symbol']}\n"
+            f"🔄 Quantity: {trade_details['quantity']}\n"
+            f"📈 Side: {trade_details['side']}\n\n"
+            f"📅 Timestamp: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}",
+            parse_mode="Markdown"
+        )
 
 # Command: Market
 async def market(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
-    """Fetch and display market data."""
+    """Fetch and display detailed market data."""
     data = get_market_data(OKTO_API_KEY)
     if 'error' in data:
         await update.message.reply_text(f"❌ Error fetching market data: {data['error']}")
     else:
         summary = (
             f"📊 *Market Data Summary:*\n\n"
-            f"BTC/USDT Price: {data.get('BTCUSDT', {}).get('price', 'N/A')}\n"
-            f"ETH/USDT Price: {data.get('ETHUSDT', {}).get('price', 'N/A')}\n"
-            f"Top Gainers: {', '.join(data.get('top_gainers', [])[:3])}\n"
-            f"Top Losers: {', '.join(data.get('top_losers', [])[:3])}\n"
+            f"📈 BTC/USDT: {data.get('BTCUSDT', {}).get('price', 'N/A')} USD\n"
+            f"📉 ETH/USDT: {data.get('ETHUSDT', {}).get('price', 'N/A')} USD\n"
+            f"🚀 *Top Gainers:* {', '.join(data.get('top_gainers', [])[:3])}\n"
+            f"📉 *Top Losers:* {', '.join(data.get('top_losers', [])[:3])}\n"
+            f"📅 Last Updated: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}"
         )
         await update.message.reply_text(summary, parse_mode="Markdown")
 
-# Callback: Button Click
+# Callback: Button Click for Insights
 async def send_insight(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
-    """Respond to button clicks and display the corresponding insight."""
+    """Respond to button clicks with dynamic insights."""
     query = update.callback_query
-    await query.answer()  # Acknowledge the button click
-
-    insight_key = query.data  # Get the data from the button that was clicked
+    await query.answer()
+    insight_key = query.data
 
     if insight_key in INSIGHTS:
         await query.edit_message_text(
-            text=f"📘 *{insight_key}*\n{INSIGHTS[insight_key]}",
-            parse_mode="Markdown"
-        )
-    else:
-        await query.edit_message_text(
-            text="❌ Sorry, I don't have information on that topic."
-        )
-
-# Helper Functions
-def execute_trade(api_key, trade_details):
-    """Execute a trade via API."""
-    url = "https://api.okto.tech/trade"
-    headers = {"Authorization": f"Bearer {api_key}", "Content-Type": "application/json"}
-    try:
-        response = requests.post(url, headers=headers, json=trade_details)
-        response.raise_for_status()
-        return response.json()
-    except requests.exceptions.RequestException as e:
-        logger.error(f"Error executing trade: {e}")
-        return {"error": str(e)}
-
-def get_market_data(api_key):
-    """Fetch market data via API."""
-    url = "https://api.okto.tech/market-data"
-    headers = {"Authorization": f"Bearer {api_key}"}
-    try:
-        response = requests.get(url, headers=headers)
-        response.raise_for_status()
-        return response.json()
-    except requests.exceptions.RequestException as e:
-        logger.error(f"Error fetching market data: {e}")
-        return {"error": str(e)}
-
-# Main function to set up the bot
-def main():
-    """Start the bot."""
-    application = ApplicationBuilder().token(TELEGRAM_TOKEN).build()
-
-    # Register command handlers
-    application.add_handler(CommandHandler("start", start))
-    application.add_handler(CommandHandler("help", help_command))
-    application.add_handler(CommandHandler("trade", trade))
-    application.add_handler(CommandHandler("market", market))
-    application.add_handler(CommandHandler("feedback", feedback))
-    application.add_handler(CommandHandler("preferences", preferences))
-    application.add_handler(CommandHandler("search", search_insights))  # Add search insights command
-
-    # Register callback query handler
-    application.add_handler(CallbackQueryHandler(send_insight))
-
-    # Start the bot
-    application.run_polling()
-
-if __name__ == "__main__":
-    main()
+            f
