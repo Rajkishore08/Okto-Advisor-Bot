@@ -54,41 +54,20 @@ async def start(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     welcome_message = (
         f"{greeting}, {user.first_name}!\n\n"
         "🤖 *Welcome to Okto Advisor Bot* – Your assistant for DeFi insights.\n"
-        "Click 'Continue' to explore the features of the bot."
+        "Select a feature below to explore!"
     )
 
-    # Enhanced Button Menu with "Continue"
+    # Enhanced Button Menu
     keyboard = [
-        [InlineKeyboardButton("📊 Market Insights", callback_data="continue_Market Monitoring")],
-        [InlineKeyboardButton("💰 Portfolio Management", callback_data="continue_Portfolio Management")],
-        [InlineKeyboardButton("🤝 Social Trading", callback_data="continue_Social Trading")],
-        [InlineKeyboardButton("💹 Staking & Yield Farming", callback_data="continue_Staking Yield Farming")],
+        [InlineKeyboardButton("📊 Market Insights", callback_data="Market Monitoring")],
+        [InlineKeyboardButton("💰 Portfolio Management", callback_data="Portfolio Management")],
+        [InlineKeyboardButton("🤝 Social Trading", callback_data="Social Trading")],
+        [InlineKeyboardButton("💹 Staking & Yield Farming", callback_data="Staking Yield Farming")],
         [InlineKeyboardButton("🔗 Help & Support", callback_data="Help")],
     ]
     reply_markup = InlineKeyboardMarkup(keyboard)
 
     await update.message.reply_text(welcome_message, parse_mode="Markdown", reply_markup=reply_markup)
-
-# Callback: Continue Button Handler
-async def continue_insight(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
-    """Handle user clicking 'Continue' for a feature."""
-    query = update.callback_query
-    insight_key = query.data.split("_", 1)[1]
-
-    if insight_key in INSIGHTS:
-        insight_text = INSIGHTS[insight_key]
-        await query.answer()
-        await query.edit_message_text(
-            text=f"📘 *{insight_key}*\n{insight_text}",
-            parse_mode="Markdown"
-        )
-
-        # Add a "Return to Menu" button after showing the detail
-        keyboard = [
-            [InlineKeyboardButton("🔙 Return to Menu", callback_data="start")]
-        ]
-        reply_markup = InlineKeyboardMarkup(keyboard)
-        await query.message.reply_text("What would you like to explore next?", reply_markup=reply_markup)
 
 # Command: Help
 async def help_command(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
@@ -105,6 +84,22 @@ async def help_command(update: Update, context: ContextTypes.DEFAULT_TYPE) -> No
         "/broadcast <message> - (Admin-only) Broadcast a message to all users.",
         parse_mode="Markdown"
     )
+
+# Command: Search Insights
+async def search_insights(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
+    """Search insights by keyword."""
+    if not context.args:
+        await update.message.reply_text("❓ Please provide a keyword to search. Usage: `/search <keyword>`")
+        return
+
+    keyword = " ".join(context.args).lower()
+    results = {key: val for key, val in INSIGHTS.items() if keyword in key.lower() or keyword in val.lower()}
+
+    if results:
+        response = "\n\n".join([f"📘 *{key}*\n{val}" for key, val in results.items()])
+        await update.message.reply_text(response, parse_mode="Markdown")
+    else:
+        await update.message.reply_text("❌ No insights found for the given keyword.")
 
 # Feedback Collection
 async def feedback(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
@@ -177,32 +172,57 @@ async def market(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
             f"📊 *Market Data Summary:*\n\n"
             f"📈 BTC/USDT: {data.get('BTCUSDT', {}).get('price', 'N/A')} USD\n"
             f"📉 ETH/USDT: {data.get('ETHUSDT', {}).get('price', 'N/A')} USD\n"
-            f"📊 24h Volume: {data.get('volume', 'N/A')} USD"
+            f"🚀 *Top Gainers:* {', '.join(data.get('top_gainers', [])[:3])}\n"
+            f"📉 *Top Losers:* {', '.join(data.get('top_losers', [])[:3])}\n"
+            f"📅 Last Updated: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}"
         )
-        await update.message.reply_text(summary)
+        await update.message.reply_text(summary, parse_mode="Markdown")
 
-# Callback for returning to the main menu
-async def return_to_menu(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
-    """Return to the main menu."""
-    await start(update, context)
+# Callback: Button Click
+async def send_insight(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
+    """Handle button presses for insights."""
+    query = update.callback_query
+    category = query.data
 
-# Main function to start the bot
-async def main():
-    application = ApplicationBuilder().token(TELEGRAM_TOKEN).build()
+    if category in INSIGHTS:
+        await query.answer()
+        await query.edit_message_text(
+            text=f"📘 *{category} Insights*\n\n{INSIGHTS[category]}",
+            parse_mode="Markdown"
+        )
 
-    # Handlers
-    application.add_handler(CommandHandler("start", start))
-    application.add_handler(CommandHandler("help", help_command))
-    application.add_handler(CommandHandler("feedback", feedback))
-    application.add_handler(CommandHandler("preferences", preferences))
-    application.add_handler(CommandHandler("trade", trade))
-    application.add_handler(CommandHandler("market", market))
-    application.add_handler(CallbackQueryHandler(continue_insight))
-    application.add_handler(CallbackQueryHandler(return_to_menu, pattern="^start$"))
+# Helper Functions
+def execute_trade(api_key: str, trade_details: dict) -> dict:
+    """Simulate a trade execution."""
+    # For demo purposes, return a mock response
+    return {"status": "success", "details": trade_details}
 
-    # Run the bot
-    await application.run_polling()
+def get_market_data(api_key: str) -> dict:
+    """Simulate fetching market data."""
+    # For demo purposes, return mock data
+    return {
+        "BTCUSDT": {"price": "30000"},
+        "ETHUSDT": {"price": "2000"},
+        "top_gainers": ["Coin1", "Coin2", "Coin3"],
+        "top_losers": ["CoinA", "CoinB", "CoinC"],
+    }
 
-# Run the bot
+# Main Function: Running the Bot
+async def main() -> None:
+    """Start the bot."""
+    app = ApplicationBuilder().token(TELEGRAM_TOKEN).build()
+
+    app.add_handler(CommandHandler("start", start))
+    app.add_handler(CommandHandler("help", help_command))
+    app.add_handler(CommandHandler("preferences", preferences))
+    app.add_handler(CommandHandler("search", search_insights))
+    app.add_handler(CommandHandler("feedback", feedback))
+    app.add_handler(CommandHandler("trade", trade))
+    app.add_handler(CommandHandler("market", market))
+    app.add_handler(CallbackQueryHandler(send_insight))
+    
+    # Run the bot until Ctrl+C is pressed
+    await app.run_polling()
+
 if __name__ == "__main__":
     asyncio.run(main())
