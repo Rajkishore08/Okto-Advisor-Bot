@@ -1,6 +1,7 @@
 import logging
 import asyncio
-import requests
+import http.client
+import json
 from datetime import datetime
 from telegram import Update, InlineKeyboardButton, InlineKeyboardMarkup
 from telegram.ext import ApplicationBuilder, CommandHandler, CallbackQueryHandler, ContextTypes, MessageHandler, filters
@@ -13,8 +14,9 @@ nest_asyncio.apply()
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
-# API keys
+# API keys and base URL
 OKTO_API_KEY = 'c6ab43bd-cf0b-4922-9be9-8750e72d223b'
+OKTO_API_BASE = 'api.okto.com'
 TELEGRAM_TOKEN = '8118102733:AAEL6abhJHS8FYxShRt7NmzBYMuBIBs5cvg'
 
 # Static insights for each category
@@ -78,12 +80,54 @@ async def help_command(update: Update, context: ContextTypes.DEFAULT_TYPE) -> No
         "/help - Display this help message.\n"
         "/trade - Execute a sample cryptocurrency trade.\n"
         "/market - Fetch the latest market data summary.\n"
+        "/portfolio - Fetch your portfolio details.\n"
+        "/portfolio_activity - Fetch your portfolio activity.\n"
+        "/transfer_tokens - Execute a token transfer.\n"
         "/feedback - Share your feedback about this bot.\n"
         "/search <keyword> - Search insights by keyword.\n"
         "/preferences - View or update your saved preferences.\n"
         "/broadcast <message> - (Admin-only) Broadcast a message to all users.",
         parse_mode="Markdown"
     )
+
+# Command: Fetch Portfolio Details
+async def portfolio(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
+    """Fetch portfolio details from OKTO API."""
+    portfolio_data = get_portfolio()
+
+    if 'error' in portfolio_data:
+        await update.message.reply_text(f"❌ Error fetching portfolio data: {portfolio_data['error']}")
+    else:
+        await update.message.reply_text(f"📊 *Your Portfolio Details:* \n\n{portfolio_data}", parse_mode="Markdown")
+
+# Command: Fetch Portfolio Activity
+async def portfolio_activity(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
+    """Fetch portfolio activity from OKTO API."""
+    activity_data = get_portfolio_activity()
+
+    if 'error' in activity_data:
+        await update.message.reply_text(f"❌ Error fetching portfolio activity: {activity_data['error']}")
+    else:
+        await update.message.reply_text(f"📈 *Your Portfolio Activity:* \n\n{activity_data}", parse_mode="Markdown")
+
+# Command: Transfer Tokens
+async def transfer_tokens(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
+    """Execute token transfer using OKTO API."""
+    if len(context.args) < 4:
+        await update.message.reply_text("❌ Please provide the required arguments: /transfer_tokens <network_name> <token_address> <quantity> <recipient_address>")
+        return
+
+    network_name = context.args[0]
+    token_address = context.args[1]
+    quantity = context.args[2]
+    recipient_address = context.args[3]
+
+    transfer_response = transfer_tokens(network_name, token_address, quantity, recipient_address)
+
+    if 'error' in transfer_response:
+        await update.message.reply_text(f"❌ Error transferring tokens: {transfer_response['error']}")
+    else:
+        await update.message.reply_text(f"✅ Token transfer successful: {transfer_response}", parse_mode="Markdown")
 
 # Command: Search Insights
 async def search_insights(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
@@ -118,95 +162,6 @@ async def feedback(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
             "💡 Please provide your feedback using `/feedback <your message>`."
         )
 
-# Command: Preferences
-async def preferences(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
-    """Manage user preferences dynamically."""
-    user_id = update.effective_user.id
-    user_preferences = USER_PREFERENCES.get(user_id, [])
-
-    if context.args:
-        new_preference = " ".join(context.args)
-        if new_preference not in user_preferences:
-            user_preferences.append(new_preference)
-            USER_PREFERENCES[user_id] = user_preferences
-            await update.message.reply_text(f"✅ Added '{new_preference}' to your preferences!")
-        else:
-            await update.message.reply_text(f"⚠️ '{new_preference}' is already in your preferences.")
-    else:
-        if user_preferences:
-            await update.message.reply_text(
-                "🌟 *Your Preferences:*\n- " + "\n- ".join(user_preferences), parse_mode="Markdown"
-            )
-        else:
-            await update.message.reply_text(
-                "💡 You have no preferences set. Use `/preferences <preference>` to add one."
-            )
-
-# Command: Trade
-async def trade(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
-    """Execute a sample trade with better feedback."""
-    trade_details = {"symbol": "BTCUSDT", "quantity": 0.01, "side": "buy"}
-    result = execute_trade(OKTO_API_KEY, trade_details)
-
-    if 'error' in result:
-        await update.message.reply_text(f"❌ Error executing trade: {result['error']}")
-    else:
-        TRADE_LOGS.append(result)
-        await update.message.reply_text(
-            f"✅ *Trade Successful!*\n\n"
-            f"🪙 Symbol: {trade_details['symbol']}\n"
-            f"🔄 Quantity: {trade_details['quantity']}\n"
-            f"📈 Side: {trade_details['side']}\n\n"
-            f"📅 Timestamp: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}",
-            parse_mode="Markdown"
-        )
-
-# Command: Market
-async def market(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
-    """Fetch and display detailed market data."""
-    data = get_market_data(OKTO_API_KEY)
-    if 'error' in data:
-        await update.message.reply_text(f"❌ Error fetching market data: {data['error']}")
-    else:
-        summary = (
-            f"📊 *Market Data Summary:*\n\n"
-            f"📈 BTC/USDT: {data.get('BTCUSDT', {}).get('price', 'N/A')} USD\n"
-            f"📉 ETH/USDT: {data.get('ETHUSDT', {}).get('price', 'N/A')} USD\n"
-            f"🚀 *Top Gainers:* {', '.join(data.get('top_gainers', [])[:3])}\n"
-            f"📉 *Top Losers:* {', '.join(data.get('top_losers', [])[:3])}\n"
-            f"📅 Last Updated: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}"
-        )
-        await update.message.reply_text(summary, parse_mode="Markdown")
-
-# Callback: Button Click
-async def send_insight(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
-    """Handle button presses for insights."""
-    query = update.callback_query
-    category = query.data
-
-    if category in INSIGHTS:
-        await query.answer()
-        await query.edit_message_text(
-            text=f"📘 *{category} Insights*\n\n{INSIGHTS[category]}",
-            parse_mode="Markdown"
-        )
-
-# Helper Functions
-def execute_trade(api_key: str, trade_details: dict) -> dict:
-    """Simulate a trade execution."""
-    # For demo purposes, return a mock response
-    return {"status": "success", "details": trade_details}
-
-def get_market_data(api_key: str) -> dict:
-    """Simulate fetching market data."""
-    # For demo purposes, return mock data
-    return {
-        "BTCUSDT": {"price": "30000"},
-        "ETHUSDT": {"price": "2000"},
-        "top_gainers": ["Coin1", "Coin2", "Coin3"],
-        "top_losers": ["CoinA", "CoinB", "CoinC"],
-    }
-
 # Main Function: Running the Bot
 async def main() -> None:
     """Start the bot."""
@@ -214,15 +169,65 @@ async def main() -> None:
 
     app.add_handler(CommandHandler("start", start))
     app.add_handler(CommandHandler("help", help_command))
-    app.add_handler(CommandHandler("preferences", preferences))
+    app.add_handler(CommandHandler("portfolio", portfolio))
+    app.add_handler(CommandHandler("portfolio_activity", portfolio_activity))
+    app.add_handler(CommandHandler("transfer_tokens", transfer_tokens))
     app.add_handler(CommandHandler("search", search_insights))
     app.add_handler(CommandHandler("feedback", feedback))
-    app.add_handler(CommandHandler("trade", trade))
-    app.add_handler(CommandHandler("market", market))
-    app.add_handler(CallbackQueryHandler(send_insight))
-    
+
     # Run the bot until Ctrl+C is pressed
     await app.run_polling()
 
 if __name__ == "__main__":
     asyncio.run(main())
+
+# Function to fetch portfolio activity from OKTO API
+def get_portfolio_activity():
+    """Fetch portfolio activity from OKTO API."""
+    conn = http.client.HTTPSConnection(OKTO_API_BASE)
+    headers = { 'Authorization': f"Bearer {OKTO_API_KEY}" }
+    
+    conn.request("GET", "/api/v1/portfolio/activity", headers=headers)
+    
+    res = conn.getresponse()
+    data = res.read()
+    
+    return data.decode("utf-8")
+
+# Function to fetch portfolio details from OKTO API
+def get_portfolio():
+    """Fetch portfolio balance details from OKTO API."""
+    conn = http.client.HTTPSConnection(OKTO_API_BASE)
+    headers = { 'Authorization': f"Bearer {OKTO_API_KEY}" }
+    
+    conn.request("GET", "/api/v1/portfolio", headers=headers)
+    
+    res = conn.getresponse()
+    data = res.read()
+    
+    return data.decode("utf-8")
+
+# Function to execute token transfer on OKTO API
+def transfer_tokens(network_name, token_address, quantity, recipient_address):
+    """Execute a token transfer using OKTO API."""
+    conn = http.client.HTTPSConnection(OKTO_API_BASE)
+    
+    payload = json.dumps({
+        "network_name": network_name,
+        "token_address": token_address,
+        "quantity": quantity,
+        "recipient_address": recipient_address
+    })
+    
+    headers = {
+        'Authorization': f"Bearer {OKTO_API_KEY}",
+        'Content-Type': "application/json"
+    }
+    
+    conn.request("POST", "/api/v1/transfer/tokens/execute", payload, headers)
+    
+    res = conn.getresponse()
+    data = res.read()
+    
+    return data.decode("utf-8")
+
