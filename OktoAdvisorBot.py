@@ -35,7 +35,7 @@ INSIGHTS = {
 USER_PREFERENCES = {}
 TRADE_LOGS = []  # To store trade logs for review
 
-# Enhanced Start Command with dynamic greeting
+# Command: Start
 async def start(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     """Start command with dynamic greeting and enhanced menu."""
     user = update.effective_user
@@ -100,7 +100,7 @@ async def search_insights(update: Update, context: ContextTypes.DEFAULT_TYPE) ->
     else:
         await update.message.reply_text("❌ No insights found for the given keyword.")
 
-# Improved Feedback Collection
+# Feedback Collection
 async def feedback(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     """Collect user feedback with optional admin logging."""
     feedback_message = " ".join(context.args) if context.args else None
@@ -177,7 +177,7 @@ async def market(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
         )
         await update.message.reply_text(summary, parse_mode="Markdown")
 
-# Callback: Button Click for Insights
+# Callback: Button Click
 async def send_insight(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     """Respond to button clicks with dynamic insights."""
     query = update.callback_query
@@ -186,4 +186,31 @@ async def send_insight(update: Update, context: ContextTypes.DEFAULT_TYPE) -> No
 
     if insight_key in INSIGHTS:
         await query.edit_message_text(
-            f
+            f"📘 *{insight_key}*\n\n{INSIGHTS[insight_key]}",
+            parse_mode="Markdown"
+        )
+    else:
+        await query.edit_message_text("❌ No insights available for this option.")
+
+# Main function to setup the bot
+async def main() -> None:
+    application = ApplicationBuilder().token(TELEGRAM_TOKEN).build()
+
+    application.add_handler(CommandHandler("start", start))
+    application.add_handler(CommandHandler("help", help_command))
+    application.add_handler(CommandHandler("feedback", feedback))
+    application.add_handler(CommandHandler("preferences", preferences))
+    application.add_handler(CommandHandler("trade", trade))
+    application.add_handler(CommandHandler("market", market))
+    application.add_handler(CommandHandler("search", search_insights))
+
+    # Register button callback handler
+    application.add_handler(CallbackQueryHandler(send_insight))
+
+    # Run the bot
+    await application.run_polling()
+
+# Running the bot
+if __name__ == "__main__":
+    import asyncio
+    asyncio.run(main())
