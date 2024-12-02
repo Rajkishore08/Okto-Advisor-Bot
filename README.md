@@ -1,4 +1,5 @@
-# Okto Advisor Bot - Telegram Bot
+# Okto Advisor Bot - Telegram Bot 
+(Build on beyond ABSTRACTION Hackathon by Router protocol and OKTO )
 
 Okto Advisor Bot is an advanced Telegram bot designed to assist users in the world of decentralized finance (DeFi). The bot provides various features such as market insights, portfolio management, social trading, and more.
 
