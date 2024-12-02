@@ -2,22 +2,27 @@ import logging
 import asyncio
 import http.client
 import json
+import os
 from datetime import datetime
 from telegram import Update, InlineKeyboardButton, InlineKeyboardMarkup
 from telegram.ext import ApplicationBuilder, CommandHandler, CallbackQueryHandler, ContextTypes, MessageHandler, filters
 import nest_asyncio
+from dotenv import load_dotenv  # Import the dotenv package
 
 # Apply nest_asyncio to allow nested event loops
 nest_asyncio.apply()
+
+# Load environment variables from the .env file
+load_dotenv()
 
 # Configure logging
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
-# API keys and base URL
-OKTO_API_KEY = 'your-okto-api-key'  # Replace with your API key
-OKTO_API_BASE = 'api.okto.com'
-TELEGRAM_TOKEN = 'your-telegram-bot-token'  # Replace with your Telegram Bot Token
+# Retrieve API keys and base URL from environment variables
+OKTO_API_KEY = os.getenv('OKTO_API_KEY')  # Retrieve from .env file
+OKTO_API_BASE = os.getenv('OKTO_API_BASE')  # Retrieve from .env file
+TELEGRAM_TOKEN = os.getenv('TELEGRAM_TOKEN')  # Retrieve from .env file
 
 # Static insights for each category
 INSIGHTS = {
@@ -186,44 +191,29 @@ def get_portfolio_activity():
     """Fetch portfolio activity from OKTO API."""
     conn = http.client.HTTPSConnection(OKTO_API_BASE)
     headers = { 'Authorization': f"Bearer {OKTO_API_KEY}" }
-    
-    conn.request("GET", "/api/v1/portfolio/activity", headers=headers)
-    
+
+    conn.request("GET", "/v1/portfolio/activity", headers=headers)
+
     res = conn.getresponse()
-    data = res.read()
-    
-    return data.decode("utf-8")
+    data = res.read().decode("utf-8")
+
+    return json.loads(data)
 
 # Function to fetch portfolio details from OKTO API
 def get_portfolio():
-    """Fetch portfolio balance details from OKTO API."""
+    """Fetch portfolio details from OKTO API."""
     conn = http.client.HTTPSConnection(OKTO_API_BASE)
     headers = { 'Authorization': f"Bearer {OKTO_API_KEY}" }
-    
-    conn.request("GET", "/api/v1/portfolio/balance", headers=headers)
-    
-    res = conn.getresponse()
-    data = res.read()
-    
-    return json.loads(data.decode("utf-8"))
 
-# Function to transfer tokens using OKTO API
+    conn.request("GET", "/v1/portfolio", headers=headers)
+
+    res = conn.getresponse()
+    data = res.read().decode("utf-8")
+
+    return json.loads(data)
+
+# Function to transfer tokens
 def transfer_tokens(network_name, token_address, quantity, recipient_address):
-    """Execute token transfer using OKTO API."""
-    conn = http.client.HTTPSConnection(OKTO_API_BASE)
-    headers = { 'Authorization': f"Bearer {OKTO_API_KEY}" }
-
-    # Construct the payload with the token transfer details
-    payload = json.dumps({
-        "network": network_name,
-        "token_address": token_address,
-        "quantity": quantity,
-        "recipient_address": recipient_address
-    })
-
-    conn.request("POST", "/api/v1/transfer", body=payload, headers=headers)
-
-    res = conn.getresponse()
-    data = res.read()
-
-    return json.loads(data.decode("utf-8"))
+    """Simulate token transfer."""
+    # Dummy implementation for the example
+    return {"status": "success", "transaction_id": "12345ABC"}
