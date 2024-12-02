@@ -1,64 +1,63 @@
-# Okto Advisor Bot
+# Okto Advisor Bot - Telegram Bot
 
-A Telegram bot that provides DeFi (Decentralized Finance) insights, portfolio management, token transfers, and more, using the OKTO API. The bot allows users to interact with various features such as market monitoring, social trading, staking & yield farming, loan management, and DeFi alerts directly within the Telegram chat interface.
+Okto Advisor Bot is an advanced Telegram bot designed to assist users in the world of decentralized finance (DeFi). The bot provides various features such as market insights, portfolio management, social trading, and more.
 
 ## Features
 
-- **Automated Trade Execution**: Execute buy/sell orders based on predefined strategies or signals.
-- **Market Monitoring**: Real-time alerts for price changes, volume spikes, and other market indicators.
-- **Portfolio Management**: View and manage crypto assets and track trading performance.
-- **Social Trading**: Follow and copy trades from expert traders within the Telegram platform.
-- **Staking & Yield Farming**: Bots assist with staking, yield farming, and notify users about new opportunities.
-- **Loan Management**: Integrates with DeFi lending platforms for borrowing and lending assets, with real-time notifications.
-- **DeFi Alerts**: Receive updates on significant changes in DeFi platforms, APY fluctuations, new pools, and platform upgrades.
-- **Voting & Polls**: Manage community governance with real-time voting and poll summaries.
-- **Event Management**: Organize and promote events like AMAs, webinars, or hackathons with RSVP, reminders, and follow-up capabilities.
-- **Automated Moderation**: Automatically filter spam, toxic language, and enforce community rules.
-- **Advertising & Partnerships**: Promote crypto projects through sponsored messages or features.
+1. **📊 Market Insights**: Get real-time alerts for price changes, volume spikes, and other important market indicators.
+2. **💰 Portfolio Management**: View and manage your crypto assets, track your trading performance, and make informed decisions.
+3. **🤝 Social Trading**: Follow expert traders, copy their trades, and see their strategies to improve your trading performance.
+4. **💹 Staking & Yield Farming**: Bots assist with staking, yield farming, and notify users about new opportunities in the DeFi space.
+5. **🔗 Help & Support**: Access support and resources to help with any questions or issues regarding the bot or the features.
 
-## Technologies Used
+## Commands
 
-- **Telegram Bot API**: For communication with users via Telegram.
-- **OKTO API**: For fetching portfolio details, executing token transfers, and other crypto-related functionalities.
-- **Python**: The primary programming language used for building the bot.
-- **python-telegram-bot**: The library used to interact with the Telegram API.
-- **http.client**: Used for making HTTP requests to the OKTO API.
-- **Nest Asyncio**: For handling asynchronous code and nested event loops.
-- **Logging**: To capture and store logs for debugging and feedback collection.
+- `/start`: Start the bot and receive a welcome message with available features.
+- `/help`: Show the list of available commands and their descriptions.
+- `/portfolio`: Get the details of your portfolio.
+- `/portfolio_activity`: View the latest activity in your portfolio.
+- `/transfer_tokens`: Transfer tokens across different networks.
+- `/feedback`: Provide feedback or suggestions for improvement.
+- `/search <keyword>`: Search for specific insights or information from the bot.
 
-## Setup & Installation
+## Button Menu
 
-### Prerequisites
+Upon starting the bot, users will be presented with an interactive button menu, which includes the following options:
 
-- Python 3.7 or higher
-- Telegram Bot Token (You can create your own bot via [BotFather](https://core.telegram.org/bots#botfather))
-- OKTO API Key (Obtain it from the OKTO platform)
+- 📊 *Market Insights*: Receive real-time alerts for market price changes, volume spikes, and other significant events.
+- 💰 *Portfolio Management*: View your crypto portfolio, track performance, and manage your assets.
+- 🤝 *Social Trading*: Follow expert traders and copy their trades within the Telegram platform.
+- 💹 *Staking & Yield Farming*: Get notified about new staking and yield farming opportunities.
+- 🔗 *Help & Support*: Access help and additional resources.
 
-### Steps to Set Up
+## Setup
 
-1. **Clone the Repository**
+1. Install the required dependencies:
+    ```bash
+    pip install python-dotenv
+    pip install python-telegram-bot nest_asyncio
+    ```
 
-   ```bash
-   git clone https://github.com/your-username/okto-advisor-bot.git
-   cd okto-advisor-bot
-## Setup & Installation
+2. Create a `.env` file with your API keys and Telegram token:
+    ```
+    OKTO_API_KEY=your-okto-api-key
+    OKTO_API_BASE=api.okto.com
+    TELEGRAM_TOKEN=your-telegram-bot-token
+    ```
 
-### Install Dependencies
+3. Run the bot:
+    ```bash
+    python bot.py
+    ```
 
-Install the required Python packages using `pip`:
+## How It Works
 
-```bash
-pip install -r requirements.txt
-```
+The bot retrieves real-time data from the OKTO API to provide insights on market trends, portfolio performance, staking opportunities, and more. It also integrates with Telegram for social trading and community engagement.
 
+## Contribution
 
-### Notes:
-- Replace the placeholders such as `your-okto-api-key`, `your-telegram-bot-token`, and `[your-email@example.com]` with your actual values.
-- Ensure that the `requirements.txt` is included with the necessary dependencies for the project. You can create it by running `pip freeze > requirements.txt` after installing the required libraries.
-- The `LICENSE` file should be added if you're using a license for the project.
+Feel free to fork the repository and submit pull requests for any improvements. Whether it's fixing bugs, adding features, or improving documentation, your contributions are welcome!
 
-![image](https://github.com/user-attachments/assets/c7e9bde9-c7f7-43b7-b295-a2bc0ac15c4d)
+## License
 
-![image](https://github.com/user-attachments/assets/e464ea4e-9fe4-4607-83a7-898cb9205302)
-
-
+This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
