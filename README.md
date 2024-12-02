@@ -2,25 +2,16 @@
 
 Okto Advisor Bot is an advanced Telegram bot designed to assist users in the world of decentralized finance (DeFi). The bot provides various features such as market insights, portfolio management, social trading, and more.
 
-![image](https://github.com/user-attachments/assets/ce35903c-33bd-46c0-9800-22ee0e85d2c1)
+![image](https://github.com/user-attachments/assets/eec3d00a-8835-4c0b-93c3-9672869211fb)
 
 
 ## Features
 
 1. **📊 Market Insights**: Get real-time alerts for price changes, volume spikes, and other important market indicators.
-   ![Market Insights Image](path_to_image/market_insights.png)  <!-- Add image for Market Insights here -->
-   
 2. **💰 Portfolio Management**: View and manage your crypto assets, track your trading performance, and make informed decisions.
-   ![Portfolio Management Image](path_to_image/portfolio_management.png)  <!-- Add image for Portfolio Management here -->
-   
 3. **🤝 Social Trading**: Follow expert traders, copy their trades, and see their strategies to improve your trading performance.
-   ![Social Trading Image](path_to_image/social_trading.png)  <!-- Add image for Social Trading here -->
-   
 4. **💹 Staking & Yield Farming**: Bots assist with staking, yield farming, and notify users about new opportunities in the DeFi space.
-   ![Staking & Yield Farming Image](path_to_image/staking_yield_farming.png)  <!-- Add image for Staking & Yield Farming here -->
-   
 5. **🔗 Help & Support**: Access support and resources to help with any questions or issues regarding the bot or the features.
-   ![Help & Support Image](path_to_image/help_support.png)  <!-- Add image for Help & Support here -->
 
 ## Commands
 
