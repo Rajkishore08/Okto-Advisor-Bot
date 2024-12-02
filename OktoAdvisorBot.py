@@ -15,9 +15,9 @@ logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
 # API keys and base URL
-OKTO_API_KEY = 'c6ab43bd-cf0b-4922-9be9-8750e72d223b'
+OKTO_API_KEY = 'your-okto-api-key'  # Replace with your API key
 OKTO_API_BASE = 'api.okto.com'
-TELEGRAM_TOKEN = '8118102733:AAEL6abhJHS8FYxShRt7NmzBYMuBIBs5cvg'
+TELEGRAM_TOKEN = 'your-telegram-bot-token'  # Replace with your Telegram Bot Token
 
 # Static insights for each category
 INSIGHTS = {
@@ -200,34 +200,30 @@ def get_portfolio():
     conn = http.client.HTTPSConnection(OKTO_API_BASE)
     headers = { 'Authorization': f"Bearer {OKTO_API_KEY}" }
     
-    conn.request("GET", "/api/v1/portfolio", headers=headers)
+    conn.request("GET", "/api/v1/portfolio/balance", headers=headers)
     
     res = conn.getresponse()
     data = res.read()
     
-    return data.decode("utf-8")
+    return json.loads(data.decode("utf-8"))
 
-# Function to execute token transfer on OKTO API
+# Function to transfer tokens using OKTO API
 def transfer_tokens(network_name, token_address, quantity, recipient_address):
-    """Execute a token transfer using OKTO API."""
+    """Execute token transfer using OKTO API."""
     conn = http.client.HTTPSConnection(OKTO_API_BASE)
-    
+    headers = { 'Authorization': f"Bearer {OKTO_API_KEY}" }
+
+    # Construct the payload with the token transfer details
     payload = json.dumps({
-        "network_name": network_name,
+        "network": network_name,
         "token_address": token_address,
         "quantity": quantity,
         "recipient_address": recipient_address
     })
-    
-    headers = {
-        'Authorization': f"Bearer {OKTO_API_KEY}",
-        'Content-Type': "application/json"
-    }
-    
-    conn.request("POST", "/api/v1/transfer/tokens/execute", payload, headers)
-    
+
+    conn.request("POST", "/api/v1/transfer", body=payload, headers=headers)
+
     res = conn.getresponse()
     data = res.read()
-    
-    return data.decode("utf-8")
 
+    return json.loads(data.decode("utf-8"))
