@@ -51,6 +51,10 @@ Install the required Python packages using `pip`:
 pip install -r requirements.txt
 
 
+### Notes:
+- Replace the placeholders such as `your-okto-api-key`, `your-telegram-bot-token`, and `[your-email@example.com]` with your actual values.
+- Ensure that the `requirements.txt` is included with the necessary dependencies for the project. You can create it by running `pip freeze > requirements.txt` after installing the required libraries.
+- The `LICENSE` file should be added if you're using a license for the project.
 
 ![image](https://github.com/user-attachments/assets/c7e9bde9-c7f7-43b7-b295-a2bc0ac15c4d)
 
