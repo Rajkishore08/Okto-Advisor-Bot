@@ -41,6 +41,14 @@ A Telegram bot that provides DeFi (Decentralized Finance) insights, portfolio ma
    ```bash
    git clone https://github.com/your-username/okto-advisor-bot.git
    cd okto-advisor-bot
+## Setup & Installation
+
+### Install Dependencies
+
+Install the required Python packages using `pip`:
+
+```bash
+pip install -r requirements.txt
 
 
 
