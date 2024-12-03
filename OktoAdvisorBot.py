@@ -76,24 +76,33 @@ async def start(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
 
     await update.message.reply_text(welcome_message, parse_mode="Markdown", reply_markup=reply_markup)
 
+# Command: Help & Support
+async def help_support(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
+    """Provide helpful links to users."""
+    response = (
+        "🔗 *Help & Support*\n\n"
+        "Need assistance? Here are some useful links:\n"
+        "- [FAQs](https://okto.tech/faqs)\n"
+        "- [User Guide](https://okto.tech/guide)\n"
+        "- [Contact Support](mailto:support@okto.tech)\n"
+        "- [Okto Blog](https://okto.tech/blog) - Stay updated with our latest news!"
+    )
+    await update.callback_query.edit_message_text(response, parse_mode="Markdown")
+
 # Command: Help
 async def help_command(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
-    """List all available commands."""
-    await update.message.reply_text(
-        "📜 *Available Commands:*\n\n"
-        "/start - Welcome message with insights menu.\n"
-        "/help - Display this help message.\n"
-        "/trade - Execute a sample cryptocurrency trade.\n"
-        "/market - Fetch the latest market data summary.\n"
-        "/portfolio - Fetch your portfolio details.\n"
-        "/portfolio_activity - Fetch your portfolio activity.\n"
-        "/transfer_tokens - Execute a token transfer.\n"
-        "/feedback - Share your feedback about this bot.\n"
-        "/search <keyword> - Search insights by keyword.\n"
-        "/preferences - View or update your saved preferences.\n"
-        "/broadcast <message> - (Admin-only) Broadcast a message to all users.",
-        parse_mode="Markdown"
+    """Provide a list of commands available to the user."""
+    help_message = (
+        "Here are the commands you can use:\n"
+        "/start - Start interacting with the bot\n"
+        "/portfolio - View your portfolio\n"
+        "/help - Get assistance or access helpful links\n"
+        "/trade - Execute a sample cryptocurrency trade\n"
+        "/market - Fetch the latest market data summary\n"
+        "/preferences - View or update your saved preferences\n"
+        "/feedback - Share your feedback about this bot"
     )
+    await update.message.reply_text(help_message)
 
 # Command: Fetch Portfolio Details
 async def portfolio(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
@@ -167,25 +176,6 @@ async def feedback(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
             "💡 Please provide your feedback using `/feedback <your message>`."
         )
 
-# Main Function: Running the Bot
-async def main() -> None:
-    """Start the bot."""
-    app = ApplicationBuilder().token(TELEGRAM_TOKEN).build()
-
-    app.add_handler(CommandHandler("start", start))
-    app.add_handler(CommandHandler("help", help_command))
-    app.add_handler(CommandHandler("portfolio", portfolio))
-    app.add_handler(CommandHandler("portfolio_activity", portfolio_activity))
-    app.add_handler(CommandHandler("transfer_tokens", transfer_tokens))
-    app.add_handler(CommandHandler("search", search_insights))
-    app.add_handler(CommandHandler("feedback", feedback))
-
-    # Run the bot until Ctrl+C is pressed
-    await app.run_polling()
-
-if __name__ == "__main__":
-    asyncio.run(main())
-
 # Function to fetch portfolio activity from OKTO API
 def get_portfolio_activity():
     """Fetch portfolio activity from OKTO API."""
@@ -212,7 +202,46 @@ def get_portfolio():
 
     return json.loads(data)
 
-# Function to transfer tokens
+# Function to execute token transfer via OKTO API
 def transfer_tokens(network_name, token_address, quantity, recipient_address):
-    """Simulate token transfer."""
-    return {"status": "success", "transaction_id": "12345ABC"}
+    """Execute token transfer via OKTO API."""
+    conn = http.client.HTTPSConnection(OKTO_API_BASE)
+    headers = {
+        'Authorization': f"Bearer {OKTO_API_KEY}",
+        'Content-Type': 'application/json'
+    }
+    payload = {
+        "network": network_name,
+        "token_address": token_address,
+        "quantity": quantity,
+        "recipient_address": recipient_address
+    }
+
+    conn.request("POST", "/v1/transfer", body=json.dumps(payload), headers=headers)
+
+    res = conn.getresponse()
+    data = res.read().decode("utf-8")
+
+    return json.loads(data)
+
+# Main function to run the bot
+async def main():
+    """Main function to run the Telegram bot."""
+    application = ApplicationBuilder().token(TELEGRAM_TOKEN).build()
+
+    # Command Handlers
+    application.add_handler(CommandHandler("start", start))
+    application.add_handler(CommandHandler("help", help_command))
+    application.add_handler(CommandHandler("portfolio", portfolio))
+    application.add_handler(CommandHandler("portfolio_activity", portfolio_activity))
+    application.add_handler(CommandHandler("transfer_tokens", transfer_tokens))
+    application.add_handler(CommandHandler("search", search_insights))
+    application.add_handler(CommandHandler("feedback", feedback))
+    application.add_handler(CallbackQueryHandler(help_support, pattern="Help"))
+
+    # Start the bot
+    await application.run_polling()
+
+# Entry point
+if __name__ == "__main__":
+    asyncio.run(main())
