@@ -43,12 +43,14 @@ Upon starting the bot, users will be presented with an interactive button menu, 
     pip install python-dotenv
     pip install python-telegram-bot nest_asyncio
     ```
+
 or 
-    ``` bash
+ ```bash
     pip install -r requirements.txt
-    ```
+ ```
+
 2. Create a `.env` file with your API keys and Telegram token:
-    ```
+    ```bash
     OKTO_API_KEY=your-okto-api-key
     OKTO_API_BASE=api.okto.com
     TELEGRAM_TOKEN=your-telegram-bot-token
