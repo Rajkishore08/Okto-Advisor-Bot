@@ -215,5 +215,4 @@ def get_portfolio():
 # Function to transfer tokens
 def transfer_tokens(network_name, token_address, quantity, recipient_address):
     """Simulate token transfer."""
-    # Dummy implementation for the example
     return {"status": "success", "transaction_id": "12345ABC"}
